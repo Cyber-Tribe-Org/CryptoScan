@@ -1,0 +1,3 @@
+[submodule "cryptoscanenvs"]
+	path = cryptoscanenvs
+	url = git@github.com:Cyber-Tribe-Org/cryptoscanenvs.git
