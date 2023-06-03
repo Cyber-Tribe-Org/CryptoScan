@@ -7,3 +7,6 @@
 [submodule "data_service"]
 	path = data_service
 	url = git@github.com:Cyber-Tribe-Org/CryptoDataService.git
+[submodule "frontend"]
+	path = frontend
+	url = git@github.com:Cyber-Tribe-Org/CryptoFrontend.git
