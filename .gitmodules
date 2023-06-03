@@ -1,0 +1,9 @@
+[submodule "cryptoscanenvs"]
+	path = cryptoscanenvs
+	url = git@github.com:Cyber-Tribe-Org/cryptoscanenvs.git
+[submodule "analyzer_service"]
+	path = analyzer_service
+	url = git@github.com:Cyber-Tribe-Org/CryptoAnalizerService.git
+[submodule "data_service"]
+	path = data_service
+	url = git@github.com:Cyber-Tribe-Org/CryptoDataService.git
