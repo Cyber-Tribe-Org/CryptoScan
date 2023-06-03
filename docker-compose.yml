@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # # Frontend Client in VueJS
+  # frontend:
+  #   container_name: cryptoscan-frontend
+  #   build:
+  #     context: ${PWD}/frontend/
+  #     dockerfile: Dockerfile
+  #   image: cryptoscan-frontend
+  #   ports:
+  #     - 8000:8000
+  #   volumes:
+  #     - ${PWD}/frontend/:/home/user/frontend/:delegated
+  #   depends_on:
+  #     - nginx
+  #   restart: unless-stopped
+  
+  # Service which is responsible for data management
+  data-service:
+    container_name: cryptoscan-data-management-service
+    build:
+      context: ${PWD}/data_service/
+      dockerfile: Dockerfile
+    image: cryptoscan-data-management-service
+    ports:
+      - 8081:8081
+    environment:
+      BROKER_URL: redis://redis:6379
+      DATABASE_HOST: database
+      DATABASE_USER: postgres
+      DATABASE_NAME: cryptoscan_db
+    depends_on:
+      - database
+      - redis
+      - celery
+    restart: unless-stopped
+
+  # Async tasks worker
+  celery:
+    container_name: cryptoscan-celery
+    build:
+      context: ${PWD}/data_service/
+      dockerfile: Dockerfile
+    image: cryptoscan-celery
+    environment:
+      BROKER_URL: redis://redis:6379
+      DATABASE_HOST: database
+      DATABASE_USER: postgres
+      DATABASE_NAME: cryptoscan_db
+    # command: watchmedo auto-restart --pattern '*.py' --signal SIGINT --recursive -- celery -A transformer worker -l debug
+    # volumes:
+    #   - ${PWD}/backend/:/home/user/backend/:delegated
+
+  # In-memory database and Message Broker
+  redis:
+    container_name: cryptoscan-redis
+    image: redis:6
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  # Database storing crypto prices 
+  database:
+    container_name: cryptoscan-database
+    image: postgres:9.6-alpine
+    environment:
+      POSTGRES_DB: cryptoscan_db
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  # Service which analyze the market movements
+  analyzer-service:
+    container_name: cryptoscan-analyzer-service
+    build:
+      context: ./analyzer_service
+      dockerfile: Dockerfile
+    image: cryptoscan-analyzer-service
+    ports:
+      - 8082:8082
+    depends_on:
+      - data-service
+    restart: unless-stopped
+  
+  # API Gateway for all the services
+  nginx:
+    container_name: cryptoscan-nginx
+    image: nginx:latest
+    volumes:
+      - ${PWD}/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 8080:80
+    depends_on:
+      - data-service
+      - analyzer-service
+    restart: unless-stopped
+
+
+
+#   web:
+#     build: .
+#     command: uvicorn crypto_scan.__main__:app --reload --host 0.0.0.0 --port 8000 
+#     container_name: cryptoscan_api
+#     volumes:
+#       - .:/application
+#     dns:
+#       - 8.8.8.8
+#     ports:
+#       - 8000:8000
+#     depends_on: 
+#       - db
+#   db:
+#     image: postgres:12.1-alpine
+#     container_name: cryptoscan_db
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data/
+#     ports:
+#       - 5432:5432
+
+# volumes:
+#   postgres_data:
